@@ -9,7 +9,12 @@ import (
 
 func main() {
 	fmt.Println("Hello World")
-  p := tea.NewProgram(newModel())
+	f,err:=tea.LogToFile("log.txt", "debug")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer f.Close()
+  p := tea.NewProgram(newModel(), tea.WithAltScreen())
     if _, err := p.Run(); err != nil {
         fmt.Printf("Alas, there's been an error: %v", err)
         os.Exit(1)
