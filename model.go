@@ -15,13 +15,13 @@ type model struct{
 	textInput text.Model
 }
 
-func newModel() model{
+func newModel() *model{
 	t1:=text.New()
 	t1.Placeholder="Enter Task"
 	t1.Focus()
 	t1.CharLimit=100
 	t1.Width=20
-	return model{
+	return &model{
 		tasks: make([]string, 0),
 		cursor: 0,
 		selected: "",
@@ -46,6 +46,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.tasks = append(m.tasks, input)
 				m.textInput.Reset()
 			}
+		case "s":
+			m.textInput.Blur()
+			if m.cursor < len(m.tasks) {
+				m.selected = m.tasks[m.cursor]
+			}
+		case "esc":
+			m.textInput.Focus()
+		case "j":
+			if m.cursor < len(m.tasks)-1 {
+				m.cursor++
+			}
+		case "k","up":
+			if m.cursor > 0 {
+				m.cursor--
+			}
 		}
 	}
 
@@ -56,10 +71,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	s := "Your Tasks:\n"
 	for i, task := range m.tasks {
-		s += fmt.Sprintf("%d. %s\n", i+1, task)
+		cursor := "  "
+		if m.cursor == i {
+			cursor = "->"
+		}
+
+		selected := ""
+		if m.selected == task {
+			selected = " [selected]"
+		}
+
+		s += fmt.Sprintf("%s %d. %s%s\n", cursor, i+1, task, selected)
 	}
+
 	s += "\n" + m.textInput.View()
-	s += "\n(press Enter to add task, q to quit)"
+	s += "\n(press Enter to add task, s to select, q to quit)"
 	return s
 
 }
