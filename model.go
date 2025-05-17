@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
 	text "github.com/charmbracelet/bubbles/textinput"
-
+	tea "github.com/charmbracelet/bubbletea"
+	//lipgloss "github.com/charmbracelet/lipgloss"
 )
 
 type model struct{
@@ -13,6 +14,11 @@ type model struct{
 	cursor int
 	selected string
 	textInput text.Model
+	screen int
+}
+type timer struct{
+	start string
+	duration string
 }
 
 func newModel() *model{
@@ -26,12 +32,22 @@ func newModel() *model{
 		cursor: 0,
 		selected: "",
 		textInput: t1,
+		screen: 0,
 	}
+}
+func (t timer) startTimer() *timer{
+	s:=time.Now()
+	newTimer:=timer{
+		start: time.Now().Format("15:04:05"),
+		duration: time.Since(s).String(),
+	}
+	return &newTimer
 }
 
 func (m model) Init() tea.Cmd {
 	return nil
 }
+
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
@@ -51,6 +67,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.cursor < len(m.tasks) {
 				m.selected = m.tasks[m.cursor]
 			}
+		case "t":
+			if m.selected==""{
+				//fmt.Println("First select something")
+			}else{
+				//t:=timer{}
+				//storeTime:=t.startTimer()
+				m.screen=1
+			}
 		case "esc":
 			m.textInput.Focus()
 		case "j":
@@ -69,6 +93,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 } 
 func (m model) View() string {
+	if m.screen==1{
+		t:=timer{}
+		storeTime:=t.startTimer()
+		text:=fmt.Sprintf("Timer started %v \n Duration is %v",storeTime.start,storeTime.duration)
+		return text
+	}
 	s := "Your Tasks:\n"
 	for i, task := range m.tasks {
 		cursor := "  "
@@ -82,8 +112,12 @@ func (m model) View() string {
 		}
 
 		s += fmt.Sprintf("%s %d. %s%s\n", cursor, i+1, task, selected)
-	}
 
+	}
+	//right:="Timer"
+
+	//input:=m.textInput.View()
+	//s+=fmt.Sprintf("%-30s%s\n",s,right)
 	s += "\n" + m.textInput.View()
 	s += "\n(press Enter to add task, s to select, q to quit)"
 	return s
