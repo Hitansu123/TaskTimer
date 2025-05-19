@@ -15,12 +15,9 @@ type model struct{
 	selected string
 	textInput text.Model
 	screen int
+	startTime time.Time
+	duration time.Duration
 }
-type timer struct{
-	start string
-	duration string
-}
-
 func newModel() *model{
 	t1:=text.New()
 	t1.Placeholder="Enter Task"
@@ -33,16 +30,11 @@ func newModel() *model{
 		selected: "",
 		textInput: t1,
 		screen: 0,
+		startTime: time.Now(),
+		duration: 0,
 	}
 }
-func (t timer) startTimer() *timer{
-	s:=time.Now()
-	newTimer:=timer{
-		start: time.Now().Format("15:04:05"),
-		duration: time.Since(s).String(),
-	}
-	return &newTimer
-}
+
 
 func (m model) Init() tea.Cmd {
 	return nil
@@ -68,14 +60,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.selected = m.tasks[m.cursor]
 			}
 		case "t":
-			if m.selected==""{
-				//fmt.Println("First select something")
+			if m.selected!=""{
+				//mt.Println
+				m.screen = 1
+				m.startTime= time.Now() // Add this field to your model to track time
+				return m, tea.Tick(time.Second, func(t time.Time) tea.Msg {
+					return t
+			})
+
 			}else{
 				//t:=timer{}
 				//storeTime:=t.startTimer()
 				m.screen=1
 			}
+
 		case "esc":
+			m.screen = 0
 			m.textInput.Focus()
 		case "j":
 			if m.cursor < len(m.tasks)-1 {
@@ -86,19 +86,28 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor--
 			}
 		}
-	}
+	case time.Time:
+			if m.screen == 1 {
+			m.duration = msg.Sub(m.startTime)
+			return m, tea.Tick(time.Second, func(t time.Time) tea.Msg {
+				return t
+			})
+		}
+	}	
+	
 
 	// Always update the text input
 	m.textInput, cmd = m.textInput.Update(msg)
 	return m, cmd
 } 
 func (m model) View() string {
-	if m.screen==1{
-		t:=timer{}
-		storeTime:=t.startTimer()
-		text:=fmt.Sprintf("Timer started %v \n Duration is %v",storeTime.start,storeTime.duration)
-		return text
-	}
+	if m.screen == 1 {
+		return fmt.Sprintf(
+			"⏱ Timer started at: %s\n⏳ Duration: %s \n\nPress 'esc' to return.",
+			m.startTime.Format("15:04:05"),
+			m.duration.Round(time.Second),
+		)
+	}	
 	s := "Your Tasks:\n"
 	for i, task := range m.tasks {
 		cursor := "  "
